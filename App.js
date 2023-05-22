@@ -1,6 +1,13 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000; // Use the value of PORT environment variable or default to 3000
+
+app.listen(port, () => {
+	console.log(`Server is running on port ${port}`);
+});
 
 const token = process.env.TELEGRAM_API_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
