@@ -2,5 +2,8 @@
 /shelf/
 /workspace.xml
 .env.local
+.env
 # Editor-based HTTP Client requests
 /httpRequests/
+.env.local
+.env
