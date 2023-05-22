@@ -43,29 +43,6 @@ async function getWasteData() {
 	return wasteData;
 }
 
-// async function getWasteData() {
-// 	const wasteTypesResult = await pool.query('SELECT * FROM waste_types');
-// 	const wasteSubtypesResult = await pool.query('SELECT * FROM waste_subtypes');
-//
-// 	const wasteData = {};
-//
-// 	wasteTypesResult.rows.forEach((type) => {
-// 		wasteData[type.name] = {};
-// 	});
-//
-// 	wasteSubtypesResult.rows.forEach((subtype) => {
-// 		const wasteTypeName = wasteTypesResult.rows.find((type) => type.id === subtype.waste_type_id).name;
-// 		wasteData[wasteTypeName][subtype.name] = {
-// 			is_middle: subtype.is_middle,
-// 			can_sort: subtype.can_sort,
-// 			where_to_throw: subtype.where_to_throw,
-// 			description: subtype.description,
-// 		};
-// 	});
-//
-// 	return wasteData;
-// }
-
 async function sendWasteTypes(chatId) {
 	const wasteData = await getWasteData();
 	const wasteTypes = Object.keys(wasteData);
