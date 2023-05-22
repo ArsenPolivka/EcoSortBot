@@ -1,35 +1,70 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const token = process.env.TELEGRAM_API_TOKEN;
-const poolCredentials = JSON.parse(process.env.DATABASE_POOL_CREDENTIALS);
 const bot = new TelegramBot(token, { polling: true });
 
-const pool = new Pool(poolCredentials);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function getWasteData() {
-	const wasteTypesResult = await pool.query('SELECT * FROM waste_types');
-	const wasteSubtypesResult = await pool.query('SELECT * FROM waste_subtypes');
+	const { data: wasteTypesResult, error: wasteTypesError } = await supabase
+			.from('waste_types')
+			.select('*');
+	const { data: wasteSubtypesResult, error: wasteSubtypesError } = await supabase
+			.from('waste_subtypes')
+			.select('*');
+
+	if (wasteTypesError || wasteSubtypesError) {
+		console.error('Error fetching waste data:', wasteTypesError || wasteSubtypesError);
+		return null;
+	}
 
 	const wasteData = {};
 
-	wasteTypesResult.rows.forEach((type) => {
-		wasteData[type.name] = {};
+	wasteTypesResult.forEach(({name}) => {
+		wasteData[name] = {};
 	});
 
-	wasteSubtypesResult.rows.forEach((subtype) => {
-		const wasteTypeName = wasteTypesResult.rows.find((type) => type.id === subtype.waste_type_id).name;
-		wasteData[wasteTypeName][subtype.name] = {
-			is_middle: subtype.is_middle,
-			can_sort: subtype.can_sort,
-			where_to_throw: subtype.where_to_throw,
-			description: subtype.description,
+	wasteSubtypesResult.forEach(({name, can_sort, is_middle, where_to_throw, waste_type_id, description}) => {
+		const wasteTypeName = wasteTypesResult.find(({id}) => id === waste_type_id).name;
+
+		wasteData[wasteTypeName][name] = {
+			is_middle: is_middle,
+			can_sort: can_sort,
+			where_to_throw: where_to_throw,
+			description: description,
 		};
 	});
 
 	return wasteData;
 }
+
+// async function getWasteData() {
+// 	const wasteTypesResult = await pool.query('SELECT * FROM waste_types');
+// 	const wasteSubtypesResult = await pool.query('SELECT * FROM waste_subtypes');
+//
+// 	const wasteData = {};
+//
+// 	wasteTypesResult.rows.forEach((type) => {
+// 		wasteData[type.name] = {};
+// 	});
+//
+// 	wasteSubtypesResult.rows.forEach((subtype) => {
+// 		const wasteTypeName = wasteTypesResult.rows.find((type) => type.id === subtype.waste_type_id).name;
+// 		wasteData[wasteTypeName][subtype.name] = {
+// 			is_middle: subtype.is_middle,
+// 			can_sort: subtype.can_sort,
+// 			where_to_throw: subtype.where_to_throw,
+// 			description: subtype.description,
+// 		};
+// 	});
+//
+// 	return wasteData;
+// }
 
 async function sendWasteTypes(chatId) {
 	const wasteData = await getWasteData();
